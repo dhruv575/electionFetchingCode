@@ -116,6 +116,71 @@ d_prob_Xd = (d_market_probabilityXd + (1 - r_market_probabilityXd)) / 2
 
 This averages the D market's "Yes" probability with the R market's implied "No" probability.
 
+---
+
+## Alternative: Fetch Senate Elections from Event URLs
+
+For Senate elections (and other events organized as Polymarket "events" rather than individual markets), use the event-based fetching approach.
+
+### Step 1: Create Event URL List
+
+Create `senate.txt` with one Polymarket event URL per line:
+
+```
+https://polymarket.com/event/washington-us-senate-election-winner
+https://polymarket.com/event/texas-us-senate-election-winner
+https://polymarket.com/event/maryland-us-senate-election-winner
+...
+```
+
+### Step 2: Fetch Events
+
+Run the fetch script to retrieve event data and identify D/R submarkets:
+
+```bash
+python fetch_senate_events.py
+```
+
+This script:
+1. Extracts the event slug from each URL
+2. Calls the Gamma API events endpoint: `https://gamma-api.polymarket.com/events?slug={slug}`
+3. Identifies Democrat and Republican markets by searching for "democrat"/"republican" in the market slug
+4. Saves raw event data to `senate_events_raw.json`
+
+**Input:** `senate.txt`
+**Output:** `senate_events_raw.json`
+
+### Step 3: Create Collated CSV
+
+Run the collation script to fetch price histories and create the final CSV:
+
+```bash
+python create_senate_collated.py
+```
+
+This script:
+1. Loads events from `senate_events_raw.json`
+2. Fetches 7-day price history for each D and R market
+3. Calculates combined `d_prob_*` values using the averaging formula
+4. Determines winner based on outcome prices
+5. Creates `senate_collated.csv` in the same format as `collated_elections.csv`
+
+**Input:** `senate_events_raw.json`
+**Output:** `senate_collated.csv`
+
+### Naming Convention
+
+Senate election names follow the pattern:
+```
+Who will win {State} in the US Senate Election?
+```
+
+Examples:
+- "Who will win Washington in the US Senate Election?"
+- "Who will win Texas in the US Senate Election?"
+
+---
+
 ## Output Files
 
 | File | Description |
@@ -124,13 +189,25 @@ This averages the D market's "Yes" probability with the R market's implied "No" 
 | `*_labeled.csv` | Markets with manual D/R labels |
 | `all_elections_labeled.csv` | Combined labeled markets |
 | `all_elections_processed.csv` | Markets with 7-day price history |
-| `collated_elections.csv` | Final paired dataset for analysis |
+| `collated_elections.csv` | Final paired dataset for analysis (80 markets) |
+| `senate.txt` | List of Senate election event URLs |
+| `senate_events_raw.json` | Raw event data from Gamma API |
+| `senate_collated.csv` | Senate elections in collated format |
 
 ## API Reference
 
 - **Gamma API** (market metadata): `https://gamma-api.polymarket.com/markets`
+- **Gamma API** (event data): `https://gamma-api.polymarket.com/events?slug={slug}`
 - **CLOB API** (price history): `https://clob.polymarket.com/prices-history`
 
 ## Rate Limiting
 
 The scripts include built-in rate limiting (0.1-0.3s delays between requests). If you encounter rate limit errors, increase the `time.sleep()` values.
+
+## Current Dataset
+
+The `collated_elections.csv` contains 80 markets:
+- 77 paired markets (both D and R)
+- 3 single markets (D only)
+- 32 Democrat wins, 48 Republican wins
+- Total volume: ~$3.2B
