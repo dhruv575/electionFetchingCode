@@ -17,22 +17,20 @@ Step 1: Fetch Markets    →    Step 2: Label D/R    →    Step 3: Process    �
 
 ## Step 1: Fetch Election Markets
 
-Run the three fetch scripts to collect closed election markets from Polymarket's Gamma API:
+Run the two fetch scripts to collect closed election markets from Polymarket's Gamma API:
 
 ```bash
 python fetch_us_elections.py      # US Elections (tag_id=1101)
-python fetch_nov_elections.py     # November Elections (tag_id=102786)
 python fetch_states_elections.py  # State Elections (tag_id=100164)
 ```
 
 Each script:
 - Fetches closed markets with the specified tag
-- Excludes certain tags to avoid duplicates (e.g., states script excludes US and Nov election tags)
+- Excludes certain tags to avoid duplicates (e.g., states script excludes US election tags)
 - Outputs a CSV with market metadata: `id`, `question`, `slug`, `outcomes`, `outcomePrices`, `volume`, `clobTokenIds`, etc.
 
 **Outputs:**
 - `us_elections_markets.csv`
-- `nov_elections_markets.csv`
 - `states_elections_markets.csv`
 
 ## Step 2: Label Markets (Manual)
@@ -46,7 +44,6 @@ For each market, manually add a `side` column indicating which party the "Yes" o
 
 Save the labeled files as:
 - `us_elections_labeled.csv`
-- `nov_elections_labeled.csv`
 - `states_elections_labeled.csv`
 
 Then combine all labeled files into a single `all_elections_labeled.csv`:
@@ -56,7 +53,6 @@ import pandas as pd
 
 dfs = [
     pd.read_csv('us_elections_labeled.csv'),
-    pd.read_csv('nov_elections_labeled.csv'),
     pd.read_csv('states_elections_labeled.csv')
 ]
 combined = pd.concat(dfs, ignore_index=True)
@@ -206,8 +202,8 @@ The scripts include built-in rate limiting (0.1-0.3s delays between requests). I
 
 ## Current Dataset
 
-The `collated_elections.csv` contains 80 markets:
-- 77 paired markets (both D and R)
+The `collated_elections.csv` contains 79 markets (2024 elections only):
+- 76 paired markets (both D and R)
 - 3 single markets (D only)
-- 32 Democrat wins, 48 Republican wins
+- 31 Democrat wins, 48 Republican wins
 - Total volume: ~$3.2B
